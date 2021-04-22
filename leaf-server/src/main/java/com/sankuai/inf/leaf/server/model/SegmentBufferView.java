@@ -2,15 +2,31 @@ package com.sankuai.inf.leaf.server.model;
 
 public class SegmentBufferView {
     private String key;
+    /**
+     * Segment0的下一个id值，动态步长，和当前号段最大值
+     */
     private long value0;
     private int step0;
     private long max0;
 
+    /**
+     * Segment1的下一个id值，动态步长，和当前号段最大值
+     */
     private long value1;
     private int step1;
     private long max1;
+    /**
+     * 使用的是哪个Segment
+     */
     private int pos;
+    /**
+     * 另一个Segment是否ready
+     */
     private boolean nextReady;
+
+    /**
+     * SegmentBuffer是否完成DB数据初始化
+     */
     private boolean initOk;
 
     public String getKey() {

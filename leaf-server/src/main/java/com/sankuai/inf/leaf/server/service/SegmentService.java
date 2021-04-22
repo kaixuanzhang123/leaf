@@ -17,6 +17,15 @@ import org.springframework.stereotype.Service;
 import java.sql.SQLException;
 import java.util.Properties;
 
+/**
+ * 构造函数，注入单例SegmentService时，完成以下几件事：
+ * 1. 加载leaf.properties配置文件解析配置
+ * 2. 创建Druid dataSource
+ * 3. 创建IDAllocDao
+ * 4. 创建ID生成器实例SegmentIDGenImpl并初始化
+ * @throws SQLException
+ * @throws InitException
+ */
 @Service("SegmentService")
 public class SegmentService {
     private Logger logger = LoggerFactory.getLogger(SegmentService.class);
@@ -38,9 +47,11 @@ public class SegmentService {
             // Config Dao
             IDAllocDao dao = new IDAllocDaoImpl(dataSource);
 
+            // 4. 创建ID生成器实例SegmentIDGenImpl
             // Config ID Gen
             idGen = new SegmentIDGenImpl();
             ((SegmentIDGenImpl) idGen).setDao(dao);
+            // 初始化SegmentIDGenImpl(加载db的tags至内存cache中，并开启定时同步更新任务)
             if (idGen.init()) {
                 logger.info("Segment Service Init Successfully");
             } else {
@@ -52,6 +63,11 @@ public class SegmentService {
         }
     }
 
+    /**
+     * 根据key获取id
+     * @param key
+     * @return
+     */
     public Result getId(String key) {
         return idGen.get(key);
     }

@@ -3,9 +3,21 @@ package com.sankuai.inf.leaf.segment.model;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class Segment {
+    /**
+     * 内存生成的每一个id号
+     */
     private AtomicLong value = new AtomicLong(0);
+    /**
+     * 当前号段允许的最大id值
+     */
     private volatile long max;
+    /**
+     * 步长，会根据数据库的step动态调整
+     */
     private volatile int step;
+    /**
+     * 当前号段所属的SegmentBuffer
+     */
     private SegmentBuffer buffer;
 
     public Segment(SegmentBuffer buffer) {
