@@ -165,6 +165,21 @@ public class SegmentIDGenImpl implements IDGen {
             return new Result(EXCEPTION_ID_IDCACHE_INIT_FALSE, Status.EXCEPTION);
         }
 
+        if (!cache.containsKey(key)) {
+            // 如果缓存中不存在，1.在数据库加入key 2.在cache中加入该值
+            int i = dao.insertSegmentToDb(key);
+            if (i == 1) {
+                SegmentBuffer buffer = new SegmentBuffer();
+                buffer.setKey(key);
+
+                // 零值初始化当前正在使用的Segment号段
+                Segment segment = buffer.getCurrent();
+                segment.setValue(new AtomicLong(0));
+                segment.setMax(0);
+                segment.setStep(0);
+                cache.put(key, buffer);
+            }
+        }
         if (cache.containsKey(key)) {
             // 获取cache中对应的SegmentBuffer，SegmentBuffer中包含双buffer，两个号段
             SegmentBuffer buffer = cache.get(key);
@@ -188,16 +203,11 @@ public class SegmentIDGenImpl implements IDGen {
             }
             // SegmentBuffer准备好之后正常就直接从cache中生成id即可
             return getIdFromSegmentBuffer(cache.get(key));
-        } else {
-            // 如果缓存中不存在，1.在数据库加入key 2.在cache中加入该值
-
-
         }
-
-
         // cache中不存在对应的key，则返回异常错误
         return new Result(EXCEPTION_ID_KEY_NOT_EXISTS, Status.EXCEPTION);
     }
+
 
     public void insertSegmentToDb(String key, Segment segment) {
         dao.insertSegmentToDb(key);
