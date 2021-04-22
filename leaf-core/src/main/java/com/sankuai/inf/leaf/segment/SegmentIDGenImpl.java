@@ -37,7 +37,8 @@ public class SegmentIDGenImpl implements IDGen {
      * 一个Segment维持时间为15分钟
      */
     private static final long SEGMENT_DURATION = 15 * 60 * 1000L;
-    private ExecutorService service = new ThreadPoolExecutor(5, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS, new SynchronousQueue<Runnable>(), new UpdateThreadFactory());
+    private ExecutorService service = new ThreadPoolExecutor(5, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS,
+            new SynchronousQueue<Runnable>(), new UpdateThreadFactory());
     private volatile boolean initOK = false;
     private Map<String, SegmentBuffer> cache = new ConcurrentHashMap<String, SegmentBuffer>();
     private IDAllocDao dao;
@@ -113,9 +114,9 @@ public class SegmentIDGenImpl implements IDGen {
             // 1. cache新增上数据库表后添加的tags
             // 2. cache删除掉数据库表后删除的tags
             //db中新加的tags灌进cache
-            for(int i = 0; i < cacheTags.size(); i++){
+            for (int i = 0; i < cacheTags.size(); i++) {
                 String tmp = cacheTags.get(i);
-                if(insertTagsSet.contains(tmp)){
+                if (insertTagsSet.contains(tmp)) {
                     insertTagsSet.remove(tmp);
                 }
             }
@@ -133,9 +134,9 @@ public class SegmentIDGenImpl implements IDGen {
             }
 
             //cache中已失效的tags从cache删除
-            for(int i = 0; i < dbTags.size(); i++){
+            for (int i = 0; i < dbTags.size(); i++) {
                 String tmp = dbTags.get(i);
-                if(removeTagsSet.contains(tmp)){
+                if (removeTagsSet.contains(tmp)) {
                     removeTagsSet.remove(tmp);
                 }
             }
@@ -152,6 +153,7 @@ public class SegmentIDGenImpl implements IDGen {
 
     /**
      * 获取对应key的下一个id值
+     *
      * @param key
      * @return
      */
@@ -186,23 +188,32 @@ public class SegmentIDGenImpl implements IDGen {
             }
             // SegmentBuffer准备好之后正常就直接从cache中生成id即可
             return getIdFromSegmentBuffer(cache.get(key));
+        } else {
+            // 如果缓存中不存在，1.在数据库加入key 2.在cache中加入该值
+
+
         }
+
+
         // cache中不存在对应的key，则返回异常错误
         return new Result(EXCEPTION_ID_KEY_NOT_EXISTS, Status.EXCEPTION);
     }
 
+    public void insertSegmentToDb(String key, Segment segment) {
+        dao.insertSegmentToDb(key);
+    }
+
     /**
      * 从数据库表中读取数据更新SegmentBuffer中的Segment
+     *
      * @param key
      * @param segment
      */
     public void updateSegmentFromDb(String key, Segment segment) {
         StopWatch sw = new Slf4JStopWatch();
-
         /**
          * 1. 先设置SegmentBuffer
          */
-
         // 获取Segment号段所属的SegmentBuffer
         SegmentBuffer buffer = segment.getBuffer();
         LeafAlloc leafAlloc;
@@ -217,7 +228,6 @@ public class SegmentIDGenImpl implements IDGen {
             buffer.setMinStep(leafAlloc.getStep());//leafAlloc中的step为DB中的step
         } else if (buffer.getUpdateTimestamp() == 0) {
             // 如果buffer的更新时间是0（初始是0，也就是第二次调用updateSegmentFromDb()）
-
             // 更新数据库中key对应记录的maxId(maxId表示当前分配到的最大id，maxId=maxId+step)，
             // 并查询更新后的记录返回
             leafAlloc = dao.updateMaxIdAndGetLeafAlloc(key);
@@ -258,7 +268,8 @@ public class SegmentIDGenImpl implements IDGen {
             else {
                 nextStep = nextStep / 2 >= buffer.getMinStep() ? nextStep / 2 : nextStep;
             }
-            logger.info("leafKey[{}], step[{}], duration[{}mins], nextStep[{}]", key, buffer.getStep(), String.format("%.2f",((double)duration / (1000 * 60))), nextStep);
+            logger.info("leafKey[{}], step[{}], duration[{}mins], nextStep[{}]", key, buffer.getStep(),
+                    String.format("%.2f", ((double) duration / (1000 * 60))), nextStep);
 
             /**
              * 根据动态调整的nextStep更新数据库相应的maxId
@@ -292,6 +303,7 @@ public class SegmentIDGenImpl implements IDGen {
 
     /**
      * 从SegmentBuffer生成id返回
+     *
      * @param buffer
      * @return
      */
@@ -386,18 +398,19 @@ public class SegmentIDGenImpl implements IDGen {
 
     /**
      * 自旋超时睡眠，如果自旋10000以内，线程池执行【准备Segment任务】结束就直接退出，否则就睡眠10ms，防止CPU空转
+     *
      * @param buffer
      */
     private void waitAndSleep(SegmentBuffer buffer) {
         int roll = 0;
         while (buffer.getThreadRunning().get()) {
             roll += 1;
-            if(roll > 10000) {
+            if (roll > 10000) {
                 try {
                     TimeUnit.MILLISECONDS.sleep(10);
                     break;
                 } catch (InterruptedException e) {
-                    logger.warn("Thread {} Interrupted",Thread.currentThread().getName());
+                    logger.warn("Thread {} Interrupted", Thread.currentThread().getName());
                     break;
                 }
             }
@@ -406,6 +419,7 @@ public class SegmentIDGenImpl implements IDGen {
 
     /**
      * 获取所有的LeafAlloc
+     *
      * @return
      */
     public List<LeafAlloc> getAllLeafAllocs() {

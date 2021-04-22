@@ -8,5 +8,6 @@ public interface IDAllocDao {
      List<LeafAlloc> getAllLeafAllocs();
      LeafAlloc updateMaxIdAndGetLeafAlloc(String tag);
      LeafAlloc updateMaxIdByCustomStepAndGetLeafAlloc(LeafAlloc leafAlloc);
+     int insertSegmentToDb(String key);
      List<String> getAllTags();
 }

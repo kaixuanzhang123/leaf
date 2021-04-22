@@ -30,6 +30,9 @@ public interface IDAllocMapper {
     @Update("UPDATE leaf_alloc SET max_id = max_id + #{step} WHERE biz_tag = #{key}")
     void updateMaxIdByCustomStep(@Param("leafAlloc") LeafAlloc leafAlloc);
 
+    @Insert("insert into leaf_alloc(biz_tag,max_id,step,description) values (#{key},1,20,#{key})")
+    int insertSegmentToDb(@Param("key") String key);
+
     @Select("SELECT biz_tag FROM leaf_alloc")
     List<String> getAllTags();
 }

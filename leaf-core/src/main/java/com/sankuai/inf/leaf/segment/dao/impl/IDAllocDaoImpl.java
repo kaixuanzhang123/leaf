@@ -63,6 +63,19 @@ public class IDAllocDaoImpl implements IDAllocDao {
     }
 
     @Override
+    public int insertSegmentToDb(String key) {
+        SqlSession sqlSession = sqlSessionFactory.openSession();
+        try {
+            int i = sqlSession.insert("com.sankuai.inf.leaf.segment.dao.IDAllocMapper.insertSegmentToDb", key);
+            //LeafAlloc result = sqlSession.selectOne("com.sankuai.inf.leaf.segment.dao.IDAllocMapper.getLeafAlloc", leafAlloc.getKey());
+            sqlSession.commit();
+            return i;
+        } finally {
+            sqlSession.close();
+        }
+    }
+
+    @Override
     public List<String> getAllTags() {
         SqlSession sqlSession = sqlSessionFactory.openSession(false);
         try {
